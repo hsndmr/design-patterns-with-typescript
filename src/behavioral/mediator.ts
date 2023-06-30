@@ -1,4 +1,5 @@
 interface Mediator {
+  register: (colleague: Colleague) => void
   notify: (sender: Colleague, event: string) => void
 }
 
@@ -7,6 +8,7 @@ abstract class Colleague {
   receivedMessages: string[] = []
 
   protected constructor (protected mediator: Mediator) {
+    mediator.register(this)
   }
 
   abstract send (message: string): void

@@ -3,24 +3,22 @@ import { Chatroom, User } from './mediator'
 
 describe('mediator', function () {
   test('when a user sends a message, other users in the chatroom should receive that message', function () {
+    // Arrange
     const chatroom = new Chatroom()
-    const users: User[] = []
 
-    users.push(new User(chatroom, 'userWhichSendsMessage'))
-    users.push(new User(chatroom, 'userWhichReceivesMessage'))
-    users.push(new User(chatroom, 'userWhichReceivesMessage2'))
+    const userWhichSendsMessage = new User(chatroom, 'userWhichSendsMessage')
+    const userWhichReceivesMessage = new User(chatroom, 'userWhichReceivesMessage')
+    const userWhichReceivesMessage2 = new User(chatroom, 'userWhichReceivesMessage2')
 
-    users.forEach(user => {
-      chatroom.register(user)
-    })
+    // Act
+    userWhichSendsMessage.send('hello world')
 
-    users[0].send('hello world')
-
-    expect(users[0].sentMessages).toEqual(['hello world'])
-    expect(users[0].receivedMessages).toEqual([])
-    expect(users[1].sentMessages).toEqual([])
-    expect(users[1].receivedMessages).toEqual(['hello world'])
-    expect(users[2].sentMessages).toEqual([])
-    expect(users[2].receivedMessages).toEqual(['hello world'])
+    // Assert
+    expect(userWhichSendsMessage.sentMessages).toEqual(['hello world'])
+    expect(userWhichSendsMessage.receivedMessages).toEqual([])
+    expect(userWhichReceivesMessage.sentMessages).toEqual([])
+    expect(userWhichReceivesMessage.receivedMessages).toEqual(['hello world'])
+    expect(userWhichReceivesMessage2.sentMessages).toEqual([])
+    expect(userWhichReceivesMessage2.receivedMessages).toEqual(['hello world'])
   })
 })
