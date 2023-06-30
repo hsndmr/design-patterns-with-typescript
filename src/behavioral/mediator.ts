@@ -7,7 +7,7 @@ abstract class Colleague {
   sentMessages: string[] = []
   receivedMessages: string[] = []
 
-  protected constructor (protected mediator: Mediator) {
+  constructor (protected mediator: Mediator) {
     mediator.register(this)
   }
 
@@ -33,10 +33,6 @@ export class Chatroom implements Mediator {
 }
 
 export class User extends Colleague {
-  constructor (mediator: Mediator, private readonly name: string) {
-    super(mediator)
-  }
-
   send (message: string): void {
     this.sentMessages.push(message)
     this.mediator.notify(this, message)

@@ -6,9 +6,9 @@ describe('mediator', function () {
     // Arrange
     const chatroom = new Chatroom()
 
-    const userWhichSendsMessage = new User(chatroom, 'userWhichSendsMessage')
-    const userWhichReceivesMessage = new User(chatroom, 'userWhichReceivesMessage')
-    const userWhichReceivesMessage2 = new User(chatroom, 'userWhichReceivesMessage2')
+    const userWhichSendsMessage = new User(chatroom)
+    const userWhichReceivesMessage = new User(chatroom)
+    const userWhichReceivesMessage2 = new User(chatroom)
 
     // Act
     userWhichSendsMessage.send('hello world')
