@@ -215,3 +215,121 @@ describe('chain-of-responsibility', () => {
 Yukarıdaki test kodunda, iki senaryoyu test ediyoruz. İlk olarak, her iki senaryo için bir sipariş oluşturuyoruz ve siparişi işlemek için bir OrderValidationHandler ve bir ShippingHandler oluşturuyoruz. Daha sonra, siparişin işlenmesi için OrderValidationHandler'ı ShippingHandler'a bağlıyoruz. Son olarak, siparişin işlenmesi için OrderValidationHandler'ı kullanıyoruz. Eğer sipariş belirlediğimiz kurallara uymuyorsa, bir hata fırlatılıyor. Ancak, sipariş belirlediğimiz kurallara uyuyorsa, siparişin durumu "shipped" olarak güncelleniyor.
 
 Bu desenle birlikte istediğimiz zaman kolayca yeni bir handler ekleyip çıkarabiliriz. Örneğin, siparişin ödemesinin yapılması için bir PaymentHandler oluşturabiliriz. Bu handler, siparişin ödemesinin gerçekleştirilmesi için kullanılabilir. Eğer siparişin ödemesi başarılı bir şekilde tamamlanırsa, siparişin durumu "paid" olarak güncellenir ve bir sonraki handler'a iletilir. Ancak, eğer siparişin ödemesi başarısız olursa, siparişin durumu "payment failed" olarak güncellenir ve bir sonraki handler'a iletilir. Bu şekilde, Chain of Responsibility deseni sayesinde istediğimiz zaman yeni işlem adımları ekleyebilir ve siparişin işlenmesini esnek bir şekilde kontrol edebiliriz.
+
+### Command
+
+ Command deseni, bir işlemi bir nesne olarak kapsüller ve daha sonra bu işlemi başka bir nesne aracılığıyla yürütmek için kullanılır. Bu sayede işlemleri parametreleştirebilir, sıraya koyabilir ve geri alabilirsiniz.
+
+
+Aşağıda yer alan `Command` arayüzü, tüm komut sınıflarının uygulaması gereken bir execute metodunu içerir. Komutların bu metodu gerçekleştirmesi, komutların yürütülmesi anlamına gelir.
+
+```typescript
+ interface Command {
+  execute: () => void
+}
+````
+
+---
+
+Aşağıda yer alan `FileManager` sınıfı, asıl işlevselliği sağlayan dosya yönetimi işlemlerini içerir. `createFile` ve `deleteFile`metodları, dosya oluşturma ve silme işlemlerini gerçekleştirir. Aynı zamanda oluşturulan ve silinen dosya isimlerini createdFiles ve deletedFiles dizilerinde saklar.
+
+```typescript
+export class FileManager {
+  createdFiles: string[] = []
+  deletedFiles: string[] = []
+  createFile (name: string): void {
+    this.createdFiles.push(name)
+  }
+
+  deleteFile (name: string): void {
+    this.deletedFiles.push(name)
+  }
+}
+````
+---
+
+Aşağıda yer alan `CreateFileCommand` sınıfı, bir dosya oluşturma işlemini temsil eder. FileManager nesnesi ve dosya adı kurucu metodla alınır. Bu sınıf, Command arayüzünü uygulayarak execute metodunu gerçekleştirir. execute metodunda, FileManager nesnesinin createFile metoduna dosya adıyla birlikte yönlendirme yapılır. Bu sayede, komut nesnesi dosya oluşturma işlemini temsil eder.
+
+````typescript
+export class CreateFileCommand implements Command {
+  constructor (private readonly fileManager: FileManager, private readonly name: string) {}
+
+  execute (): void {
+    this.fileManager.createFile(this.name)
+  }
+}
+````
+
+---
+
+Aşağıda yer alan `DeleteFileCommand` sınıfı, bir dosya silme işlemini temsil eder. FileManager nesnesi ve dosya adı kurucu metodla alınır. Yine Command arayüzünü uygulayarak execute metodunu gerçekleştirir. execute metodunda, FileManager nesnesinin deleteFile metoduna dosya adıyla birlikte yönlendirme yapılır. Böylece, komut nesnesi dosya silme işlemini temsil eder.
+
+````typescript
+export class DeleteFileCommand implements Command {
+  constructor (private readonly fileManager: FileManager, private readonly name: string) {}
+
+  execute (): void {
+    this.fileManager.deleteFile(this.name)
+  }
+}
+````
+
+---
+
+Aşağıda yer alan `FileCommandInvoker` sınıfı, komutları yöneten ve toplu olarak yürüten bir komut yürütücüsünü temsil eder. addCommand metodu ile komutlar eklenir. executeCommands metodu, saklanan komutları sırayla çağırarak yürütür. Bu sayede komutlar toplu halde yönetilir.
+
+````typescript
+export class FileCommandInvoker {
+  commands: Command[] = []
+
+  addCommand (command: Command): void {
+    this.commands.push(command)
+  }
+
+  executeCommands (): void {
+    this.commands.forEach(command => { command.execute() })
+    this.commands = []
+  }
+}
+````
+
+--- 
+
+Şimdi, Command tasarım desenini uygulamak için gereken tüm kodları yazdık. Şimdi, deseni test etmek için gerekli olan test kodu aşağıda yer almaktadır.
+
+````typescript
+describe('command', () => {
+  it('should execute file commands and update file manager accordingly', () => {
+    // Arrange
+    const fileManager = new FileManager()
+    const fileCommandInvoker = new FileCommandInvoker()
+
+    const commands = [
+      new CreateFileCommand(fileManager, 'create.txt'),
+      new DeleteFileCommand(fileManager, 'delete.txt')
+    ]
+
+    commands.forEach(command => { fileCommandInvoker.addCommand(command) })
+
+    // Act
+    fileCommandInvoker.executeCommands()
+
+    // Assert
+    expect(fileManager.createdFiles).toEqual(['create.txt'])
+    expect(fileManager.deletedFiles).toEqual(['delete.txt'])
+    expect(fileCommandInvoker.commands).toEqual([])
+  })
+})
+
+````
+
+Yukarıdaki kod, komut nesnelerini kullanarak dosya oluşturma ve silme işlemlerini yönetmeyi gösterir. Komutlar, CreateFileCommand ve DeleteFileCommand sınıflarıyla temsil edilir ve bu sınıflar aracılığıyla FileManager nesnesinin metodları çağrılır. FileCommandInvoker nesnesi, komutları sırayla yürüterek işlemleri gerçekleştirir ve ardından komutları temizler. Bu yaklaşım, işlemleri toplu halde yönetmek, sırayla yürütmek ve gerektiğinde geri almak için kullanışlıdır.
+
+--- 
+
+Kısacası, Command tasarım deseni bu kod parçasında şu işlevi yerine getiriyor:
+
+- İşlemleri (dosya oluşturma ve silme gibi) birer nesne olarak temsil ediyor (CreateFileCommand, DeleteFileCommand).
+- İşlemleri yürütmek için bir arayüz tanımlıyor (Command arayüzü).
+- İşlemleri yönetmek ve sırayla yürütmek için bir komut yürütücüsü sağlıyor (FileCommandInvoker).
+- Bu sayede, işlemler birer komut nesnesi olarak paketlenir ve daha sonra ihtiyaca göre sırayla çağrılabilir, saklanabilir veya geri alınabilir. Bu yapı, kodun daha modüler, esnek ve yönetilebilir olmasını sağlar.
